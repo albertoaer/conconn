@@ -1,9 +1,15 @@
 defmodule Conconn do
-  alias Conconn.{Producer.PingPongProducer, Client.WebSocket, ProducerSupervisor}
+  alias Conconn.{
+    Producer.PingPongProducer,
+    Client.WebSocket,
+    ProducerSupervisor,
+    ResultCollector
+  }
   use Application
 
   def start(_type, _args) do
     childs = [
+      ResultCollector,
       ProducerSupervisor,
       {
         Conconn.ClientSupervisor,
@@ -12,10 +18,10 @@ defmodule Conconn do
           [
             url: "ws://localhost:8080/ws/xd",
             producer: {
-              PingPongProducer, [traffic: 1000]
+              PingPongProducer, [traffic: 100]
             }
           ],
-          10
+          500
         }
       }
     ]
