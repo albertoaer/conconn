@@ -13,13 +13,14 @@ defmodule Conconn.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger],
+      mod: {Conconn, []}
     ]
   end
 
   defp deps do
     [
-      {:websockex, "~> 0.4.3"}
+      {:websockex, "~> 0.4.3"},
     ]
   end
 end
