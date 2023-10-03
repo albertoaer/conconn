@@ -1,4 +1,4 @@
-defmodule Conconn.ProducerSupervisor do
+defmodule Conconn.ConcTestSupervisor do
   use DynamicSupervisor
 
   def start_link(arg) do

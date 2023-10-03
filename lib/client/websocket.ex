@@ -16,7 +16,7 @@ defmodule Conconn.Client.WebSocket do
   @impl true
   def handle_connect(conn, state) do
     target = self()
-    response = Conconn.Producer.get(producer(state))
+    response = Conconn.ConcTest.get(producer(state))
     spawn(fn
       -> case response do
         {:ok, msg} -> WebSockex.send_frame(target, {:text, msg})
@@ -28,7 +28,7 @@ defmodule Conconn.Client.WebSocket do
 
   @impl true
   def handle_frame({:text, response}, state) do
-    case Conconn.Producer.verify(producer(state), response) do
+    case Conconn.ConcTest.verify(producer(state), response) do
       {:ok, msg} -> {:reply, {:text, msg}, state}
       {:ok} -> {:close, state}
       _ -> {:ok, state}
@@ -42,6 +42,6 @@ defmodule Conconn.Client.WebSocket do
   end
 
   defp producer(%Data{ id: id, producer: producer }) do
-    Conconn.ProducerSupervisor.get_or_start_link(id, producer)
+    Conconn.ConcTestSupervisor.get_or_start_link(id, producer)
   end
 end

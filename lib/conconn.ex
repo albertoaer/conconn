@@ -1,8 +1,8 @@
 defmodule Conconn do
   alias Conconn.{
-    Producer.PingPongProducer,
+    ConcTest.PingPongConcTest,
     Client.WebSocket,
-    ProducerSupervisor,
+    ConcTestSupervisor,
     ResultCollector
   }
   use Application
@@ -10,7 +10,7 @@ defmodule Conconn do
   def start(_type, _args) do
     childs = [
       ResultCollector,
-      ProducerSupervisor,
+      ConcTestSupervisor,
       {
         Conconn.ClientSupervisor,
         [
@@ -19,7 +19,7 @@ defmodule Conconn do
             [
               url: "ws://localhost:8080/ws/xd",
               producer: {
-                PingPongProducer, traffic: 100, group: 1
+                PingPongConcTest, traffic: 100, group: 1
               }
             ],
             20
@@ -29,7 +29,7 @@ defmodule Conconn do
             [
               url: "ws://localhost:8080/ws/xd2",
               producer: {
-                PingPongProducer, traffic: 100, group: 2
+                PingPongConcTest, traffic: 100, group: 2
               }
             ],
             20

@@ -1,4 +1,4 @@
-defmodule Conconn.Producer.PingPongProducer do
+defmodule Conconn.ConcTest.PingPongConcTest do
   use GenServer
 
   defmodule State do
