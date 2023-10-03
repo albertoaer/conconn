@@ -3,13 +3,14 @@ defmodule Conconn.Producer.PingPongProducer do
 
   defmodule State do
     @enforce_keys [:traffic, :watch]
-    defstruct [:traffic, :watch, :msg]
+    defstruct [:traffic, :watch, :msg, :group]
   end
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, %State{
       traffic: Keyword.get(opts, :traffic),
-      watch: Conconn.StopWatch.new
+      watch: Conconn.StopWatch.new,
+      group: Keyword.get(opts, :group)
     })
   end
 
@@ -45,8 +46,8 @@ defmodule Conconn.Producer.PingPongProducer do
   end
 
   @impl true
-  def terminate(_reason, %State{watch: watch}) do
-    Conconn.ResultCollector.put(watch)
+  def terminate(_reason, %State{watch: watch, group: group}) do
+    Conconn.ResultCollector.put(watch, group)
   end
 
   defp next(%State{traffic: 0, watch: watch} = state), do: %{
