@@ -1,4 +1,4 @@
-defmodule Conconn.ConcTest.PingPongConcTest do
+defmodule Conconn.ConcTask.PingPongConcTask do
   use GenServer
 
   defmodule State do
@@ -8,9 +8,9 @@ defmodule Conconn.ConcTest.PingPongConcTest do
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, %State{
-      traffic: Keyword.get(opts, :traffic),
+      traffic: Keyword.get(opts, :traffic, 1),
       watch: Conconn.StopWatch.new,
-      group: Keyword.get(opts, :group)
+      group: Keyword.get(opts, :group, :unknown)
     })
   end
 
@@ -20,16 +20,7 @@ defmodule Conconn.ConcTest.PingPongConcTest do
   end
 
   @impl true
-  def handle_call({:get}, _from, state) do
-    if (state = next(state)).msg do
-      {:reply, {:ok, state.msg}, state}
-    else
-      {:stop, :normal, {:ok}, state}
-    end
-  end
-
-  @impl true
-  def handle_call({:verify, msg}, _from, state) do
+  def handle_call({:next, msg}, _from, state) do
     cond do
       msg == state.msg ->
         state = next(state)
@@ -46,9 +37,7 @@ defmodule Conconn.ConcTest.PingPongConcTest do
   end
 
   @impl true
-  def terminate(_reason, %State{watch: watch, group: group}) do
-    Conconn.ResultCollector.put(watch, group)
-  end
+  def terminate(_reason, %State{watch: watch, group: group}), do: Conconn.ResultCollector.put(watch, group)
 
   defp next(%State{traffic: 0, watch: watch} = state), do: %{
     state | msg: nil, watch: Conconn.StopWatch.stop(watch)

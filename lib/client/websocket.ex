@@ -1,34 +1,21 @@
 defmodule Conconn.Client.WebSocket do
+  use Conconn.Client
   use WebSockex
 
-  defmodule Data do
-    @enforce_keys [:id, :producer]
-    defstruct [:id, :producer]
+  defmodule State do
+    defstruct [:task_id, :conn]
   end
 
-  def start_link(opts) do
-    WebSockex.start_link(Keyword.get(opts, :url), __MODULE__, %Data{
-      id: Keyword.get(opts, :id),
-      producer: Keyword.get(opts, :producer)
-    })
+  def start_link(url) do
+    WebSockex.start_link(url, __MODULE__, %State{})
   end
 
   @impl true
-  def handle_connect(conn, state) do
-    target = self()
-    response = Conconn.ConcTest.get(producer(state))
-    spawn(fn
-      -> case response do
-        {:ok, msg} -> WebSockex.send_frame(target, {:text, msg})
-        _ -> WebSockex.Conn.close_socket(conn)
-      end
-    end)
-    {:ok, state}
-  end
+  def handle_connect(conn, state), do: try_begin(%{state | conn: conn})
 
   @impl true
-  def handle_frame({:text, response}, state) do
-    case Conconn.ConcTest.verify(producer(state), response) do
+  def handle_frame({:text, response}, %State{task_id: task_id} = state) when is_pid(task_id) do
+    case Conconn.ConcTask.next(task_id, response) do
       {:ok, msg} -> {:reply, {:text, msg}, state}
       {:ok} -> {:close, state}
       _ -> {:ok, state}
@@ -36,12 +23,28 @@ defmodule Conconn.Client.WebSocket do
   end
 
   @impl true
+  def handle_frame(_frame, state), do: {:ok, state}
+
+  @impl true
   def handle_disconnect(_connection_status_map, state) do
     IO.puts("Disconnected")
     {:ok, state}
   end
 
-  defp producer(%Data{ id: id, producer: producer }) do
-    Conconn.ConcTestSupervisor.get_or_start_link(id, producer)
+  @impl true
+  def handle_info({:begin_task, id}, state), do: try_begin(%{state | task_id: id})
+
+  def try_begin(%State{task_id: task_id, conn: conn} = state) do
+    if !!task_id and !!conn do
+      target = self()
+      response = Conconn.ConcTask.next(task_id)
+      spawn(fn
+        -> case response do
+          {:ok, msg} -> WebSockex.send_frame(target, {:text, msg})
+          _ -> WebSockex.Conn.close_socket(conn)
+        end
+      end)
+    end
+    {:ok, state}
   end
 end

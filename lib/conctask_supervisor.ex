@@ -1,4 +1,4 @@
-defmodule Conconn.ClientSupervisor do
+defmodule Conconn.ConcTaskSupervisor do
   use DynamicSupervisor
 
   def start_link(arg) do
