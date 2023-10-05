@@ -2,15 +2,16 @@ defmodule Conconn.ConcTask.PingPongConcTask do
   use GenServer
 
   defmodule State do
-    @enforce_keys [:traffic, :watch]
-    defstruct [:traffic, :watch, :msg, :group]
+    @enforce_keys [:traffic, :watch, :callbacks]
+    defstruct [:traffic, :watch, :msg, :group, :callbacks]
   end
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, %State{
       traffic: Keyword.get(opts, :traffic, 1),
       watch: Conconn.StopWatch.new,
-      group: Keyword.get(opts, :group, :unknown)
+      group: Keyword.get(opts, :group, :unknown),
+      callbacks: []
     })
   end
 
@@ -37,7 +38,15 @@ defmodule Conconn.ConcTask.PingPongConcTask do
   end
 
   @impl true
-  def terminate(_reason, %State{watch: watch, group: group}), do: Conconn.ResultCollector.put(watch, group)
+  def handle_cast({:callback, pid}, state) do
+    {:noreply, %{state | callbacks: [pid | state.callbacks]}}
+  end
+
+  @impl true
+  def terminate(_reason, %State{watch: watch, group: group, callbacks: callbacks}) do
+    Conconn.ResultCollector.put(watch, group)
+    Enum.map(callbacks, fn callback -> send(callback, :completed) end)
+  end
 
   defp next(%State{traffic: 0, watch: watch} = state), do: %{
     state | msg: nil, watch: Conconn.StopWatch.stop(watch)

@@ -27,7 +27,6 @@ defmodule Conconn.Client.WebSocket do
 
   @impl true
   def handle_disconnect(_connection_status_map, state) do
-    IO.puts("Disconnected")
     {:ok, state}
   end
 
@@ -38,7 +37,7 @@ defmodule Conconn.Client.WebSocket do
     if !!task_id and !!conn do
       target = self()
       response = Conconn.ConcTask.next(task_id)
-      spawn(fn
+      Task.start_link(fn
         -> case response do
           {:ok, msg} -> WebSockex.send_frame(target, {:text, msg})
           _ -> WebSockex.Conn.close_socket(conn)
