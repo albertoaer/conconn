@@ -47,7 +47,7 @@ defmodule Conconn.ResultCollector do
   end
 
   def start_link(arg) do
-    GenServer.start_link(__MODULE__, arg, name: __MODULE__)
+    GenServer.start_link(__MODULE__, arg)
   end
 
   @impl true
@@ -78,9 +78,9 @@ defmodule Conconn.ResultCollector do
     {:reply, state |> Results.get(group) |> GroupResults.summary, state}
   end
 
-  def put(metrics, group \\ :unknown), do: GenServer.cast(__MODULE__, {:put, metrics, group})
+  def put(results, metrics, group \\ :unknown), do: GenServer.cast(results, {:put, metrics, group})
 
-  def summary(group \\ nil) do
-    GenServer.call(__MODULE__, if(group, do: {:summary, group}, else: :summary))
+  def summary(results, group \\ nil) do
+    GenServer.call(results, if(group, do: {:summary, group}, else: :summary))
   end
 end

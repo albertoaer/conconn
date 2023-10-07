@@ -1,5 +1,5 @@
 defmodule Conconn.Launcher do
-  alias Conconn.{ClientSupervisor, ConcTaskSupervisor}
+  alias Conconn.Launcher
 
   use Task
 
@@ -20,36 +20,39 @@ defmodule Conconn.Launcher do
   end
 
   def run(opts) do
-    count = for {:begin_task, pid} <- perform_launch(opts) do
-      Conconn.ConcTask.add_callback(pid)
-    end |> length
-    loop(count, 0)
+    {:ok, supervisor} = Launcher.Supervisor.start_link()
+    count = perform_launch(opts, supervisor) |> length
+    {:ok, results} = Launcher.Supervisor.start_child(supervisor, Conconn.ResultCollector)
+    loop(results, count, 0)
   end
 
-  def loop(count, received) when received >= count, do: :ok
+  def loop(results, count, received) when received >= count, do: Conconn.ResultCollector.summary(results)
 
-  def loop(count, received) do
+  def loop(results, count, received) do
     receive do
-      :completed -> loop(count, received + 1)
-      _ -> loop(count, received)
+      {:completed, metrics} ->
+        Conconn.ResultCollector.put(results, metrics)
+        loop(results, count, received + 1)
+      :failure -> loop(results, count, received + 1)
     end
   end
 
-  defp perform_launch(items) when is_list(items), do: Enum.map(items, fn item -> apply(&launch/3, Tuple.to_list(item)) end)
-
-  defp perform_launch({client, task, count}) do
+  defp perform_launch({client, task, count}, supervisor) do
     for _ <- 0..count-1 do
-      start_test_client_pair(client, task)
+      start_test_client_pair(client, task, supervisor)
     end
   end
 
-  defp start_test_client_pair(client, task) do
-    {:ok, c_id} = produce_child_config(client) |> ClientSupervisor.start_child()
-    {:ok, t_id} = produce_child_config(task) |> ConcTaskSupervisor.start_child()
-    send(c_id, {:begin_task, t_id})
-  end
+  defp perform_launch(items, supervisor) when is_list(items), do: Enum.reduce(
+    items, [], fn
+      item, acc -> apply(&perform_launch/2, [item, supervisor]) ++ acc
+    end
+  )
 
-  defp produce_child_config(spec) do
-    Supervisor.child_spec(spec, restart: :transient)
+  defp start_test_client_pair(client, task, supervisor) do
+    {:ok, c_id} = Launcher.Supervisor.start_child(supervisor, client)
+    {:ok, t_id} = Launcher.Supervisor.start_child(supervisor, task)
+    Conconn.ConcTask.add_callback(t_id)
+    Conconn.Client.begin_task(c_id, t_id)
   end
 end

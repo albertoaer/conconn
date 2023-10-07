@@ -17,8 +17,8 @@ defmodule Conconn.Client.WebSocket do
   def handle_frame({:text, response}, %State{task_id: task_id} = state) when is_pid(task_id) do
     case Conconn.ConcTask.next(task_id, response) do
       {:ok, msg} -> {:reply, {:text, msg}, state}
-      {:ok} -> {:close, state}
-      _ -> {:ok, state}
+      :ok -> {:close, state}
+      :continue -> {:ok, state}
     end
   end
 
@@ -32,6 +32,9 @@ defmodule Conconn.Client.WebSocket do
 
   @impl true
   def handle_info({:begin_task, id}, state), do: try_begin(%{state | task_id: id})
+
+  @impl true
+  def handle_info(_msg, state), do: {:ok, state}
 
   def try_begin(%State{task_id: task_id, conn: conn} = state) do
     if !!task_id and !!conn do
