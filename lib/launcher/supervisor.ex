@@ -1,8 +1,8 @@
 defmodule Conconn.Launcher.Supervisor do
   use DynamicSupervisor
 
-  def start_link do
-    DynamicSupervisor.start_link(__MODULE__, nil)
+  def start_link(opts \\ nil) do
+    DynamicSupervisor.start_link(__MODULE__, opts)
   end
 
   def init(_) do
