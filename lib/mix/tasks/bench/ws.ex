@@ -3,17 +3,29 @@ defmodule Mix.Tasks.Bench.Ws do
 
   @impl Mix.Task
   def run(args) do
-    {flags, argv} = OptionParser.parse!(args, strict: [traffic: :integer, clients: :integer])
+    task = Conconn.Launcher.launch(get_tasks(args))
+    Conconn.Launcher.await(task) |> Kernel.inspect() |> Mix.Shell.IO.info()
+  end
+
+  def get_tasks(args) do
+    {args, remain} = Enum.split_while(args, fn arg -> arg != "--" end)
+    {flags, argv} = OptionParser.parse!(args, aliases: [t: :traffic, c: :clients], strict: [traffic: :integer, clients: :integer])
     url = extract_url(argv)
-    task = Conconn.Client.WebSocket.launch(
-      url,
+    task = {
+      {
+        Conconn.Client.WebSocket,
+        url,
+      },
       {
         Conconn.ConcTask.PingPongConcTask,
         traffic: Keyword.get(flags, :traffic, 1000),
       },
       Keyword.get(flags, :clients, 1)
-    )
-    Conconn.Launcher.await(task) |> Kernel.inspect() |> Mix.Shell.IO.info()
+    }
+    case remain do
+      [_ | remain] -> [task | get_tasks(remain)]
+      _ -> [task]
+    end
   end
 
   def extract_url(argv) do
