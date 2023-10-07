@@ -9,8 +9,12 @@ defmodule Conconn.Launcher do
     async(items)
   end
 
-  def await(launcher, timeout \\ :infinity) do
-    Task.await(launcher, timeout)
+  def await(launcher, opts \\ []) do
+    result = Task.await(launcher, Keyword.get(opts, :timeout, :infinity))
+    if Keyword.get(opts, :log, true) do
+      Conconn.Launcher.Log.persist_result(result)
+    end
+    result
   end
 
   def async(arg) do
