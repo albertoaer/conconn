@@ -8,17 +8,20 @@ defmodule Conconn.ResultCollector do
   end
 
   defmodule GroupResults do
-    defstruct stored: [], samples: 0, count: 0, avg_time: 0, total_time_s: 0
+    defstruct stored: [], samples: 0, count: 0, avg_time: 0, total_time_s: 0, avg_time_s: 0
 
     def append(nil, sample), do: append(%GroupResults{}, sample)
     def append(%GroupResults{} = results, %Sample{} = sample) do
       n_count = results.count + sample.count
+      total_time_s = results.total_time_s + sample.total_time_s
+      samples = results.samples + 1
       %{results |
         stored: if(Process.get(:store_samples, false), do: [sample | results.stored], else: []),
-        samples: results.samples + 1,
+        samples: samples,
         count: n_count,
         avg_time: ((results.avg_time * results.count) + (sample.avg_time * sample.count)) / n_count,
-        total_time_s: results.total_time_s + sample.total_time_s
+        total_time_s: results.total_time_s + sample.total_time_s,
+        avg_time_s: total_time_s / samples
       }
     end
 
