@@ -9,7 +9,11 @@ defmodule Mix.Tasks.Bench.Ws do
 
   def get_tasks(args) do
     {args, remain} = Enum.split_while(args, fn arg -> arg != "--" end)
-    {flags, argv} = OptionParser.parse!(args, aliases: [t: :traffic, c: :clients], strict: [traffic: :integer, clients: :integer])
+    {flags, argv} = OptionParser.parse!(
+      args,
+      aliases: [t: :traffic, c: :clients],
+      strict: [traffic: :integer, clients: :integer]
+    )
     url = extract_url(argv)
     task = {
       {
