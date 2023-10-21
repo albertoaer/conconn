@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Bench.Ws do
         url,
       },
       {
-        Conconn.ConcTask.PingPongConcTask,
+        Conconn.ConcTask.EchoConcTask,
         traffic: Keyword.get(flags, :traffic, 1000),
       },
       Keyword.get(flags, :clients, 1)

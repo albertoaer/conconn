@@ -4,7 +4,7 @@ Concurrent connections benchmark fully programmed in [Elixir](https://github.com
 
 Currently there is only a WebSockets test as it is the only one I have required to code. Feel free to add your own technology clients under *lib\client\your_client.ex* for example tcp, udp, http, etc.
 
-To add a concurrency task just code it under *lib\conctask\your_task.ex*. For example, the task I coded for WebSockets is `PingPongConcTask` (*ping_pong.ex*), it will be completed when the received message is the same as the sent one. This would not be suitable for an http request, so it is up to your client requeriments the task you want to use.
+To add a concurrency task just code it under *lib\conctask\your_task.ex*. For example, the task I coded for WebSockets is `EchoConcTask` (*echo.ex*), it will be completed when the received message is the same as the sent one. This would not be suitable for an http request, so it is up to your client requeriments the task you want to use.
 
 # How to use it?
 

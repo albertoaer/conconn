@@ -1,4 +1,4 @@
-defmodule Conconn.ConcTask.PingPongConcTask do
+defmodule Conconn.ConcTask.EchoConcTask do
   use Conconn.ConcTask
 
   defmodule State do
