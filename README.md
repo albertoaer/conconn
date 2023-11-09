@@ -22,6 +22,23 @@ The group is numerically assign starting from 1 for each task
 
 You can manually enter `iex -S mix` with the `Conconn.Launcher` several `launch` functions to perform the benchmark. Using this technique you will be able to pick the client and the task, and even different ones per task group.
 
+All flags have shortcuts so you can write:
+```
+mix bench.ws "ws://url-a..." -t <traffic A> -c <clients A> -- "ws://url-b..." -t <traffic B> -c <clients B> -- ...
+```
+
+### Update
+
+The `EmitConcTask` (*emit.ex*) task has been released and can be selected with the `-v` (`--validation`) flag
+```
+mix bench.ws "ws://url..." -t <the number of messages> -c <the number of clients> -v <emit or echo>
+```
+
+- `-v echo` is for the default `EchoConcTask`
+- `-v emit` is for the `EmitConcTask`
+
+`-v` can be omitted taking `EchoConcTask` by default.
+
 ### Note
 
 There is no configuration set yet for the output file, so every ran test results will be write down into a *./results.txt* file.
