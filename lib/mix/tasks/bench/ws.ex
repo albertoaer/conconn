@@ -11,8 +11,8 @@ defmodule Mix.Tasks.Bench.Ws do
     {args, remain} = Enum.split_while(args, fn arg -> arg != "--" end)
     {flags, argv} = OptionParser.parse!(
       args,
-      aliases: [t: :traffic, c: :clients],
-      strict: [traffic: :integer, clients: :integer]
+      aliases: [t: :traffic, c: :clients, v: :validation],
+      strict: [traffic: :integer, clients: :integer, validation: :string]
     )
     url = extract_url(argv)
     task = {
@@ -21,7 +21,7 @@ defmodule Mix.Tasks.Bench.Ws do
         url,
       },
       {
-        Conconn.ConcTask.EchoConcTask,
+        extract_conc_task(Keyword.get(flags, :validation)),
         traffic: Keyword.get(flags, :traffic, 1000),
       },
       Keyword.get(flags, :clients, 1)
@@ -29,6 +29,14 @@ defmodule Mix.Tasks.Bench.Ws do
     case remain do
       [_ | remain] -> [task | get_tasks(remain)]
       _ -> [task]
+    end
+  end
+
+  def extract_conc_task(value) do
+    case value do
+      "emit" -> Conconn.ConcTask.EmitConcTask
+      n when n in [nil, "echo"] -> Conconn.ConcTask.EchoConcTask
+      n -> raise "Unknown concurrent task: #{n}"
     end
   end
 

@@ -26,7 +26,7 @@ defmodule Conconn.ConcTask do
         end
       end
 
-      defp recv_next(%State{task_state: task_state, watch: watch}=state, msg, pid) do
+      defp recv_next(%State{task_state: task_state, watch: watch} = state, msg, pid) do
         {response, stop, task_state, watch} = case handle_next(msg, task_state) do
           {:ok, msg, state} -> {{:ok, msg}, false, state, Conconn.StopWatch.stop_start(watch)}
           {:continue, state} -> {:continue, false, state, watch}
